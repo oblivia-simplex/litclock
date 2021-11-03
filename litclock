@@ -1,11 +1,18 @@
 #! /usr/bin/env python3
 
 import json
+import sys
 import random
 from datetime import datetime
 import os 
+import subprocess as sp
 
 DIR = os.path.dirname(os.path.realpath(__file__))
+
+
+def in_tty():
+    out = sp.run(["tty"], capture_output=True).stdout.decode()
+    return out != 'not a tty'
 
 def time_path():
     now = datetime.now()
@@ -28,15 +35,28 @@ def pick_entry():
     return random.choice(get_entry())
 
 
-def md_time():
+def text(color=in_tty()):
     e = pick_entry()
+    if not color:
+        strong_start = '**'
+        strong_end = '**'
+        emph_start = '*'
+        emph_end = '*'
+    else:
+        strong_start = '\033[31;1m'
+        strong_end = '\033[0m'
+        emph_start = '\033[31;0m'
+        emph_end = strong_end
     return f"""
-{e['quote_first']}**{e['quote_time_case']}**{e['quote_last']}
+{e['quote_first']}{strong_start}{e['quote_time_case']}{strong_end}{e['quote_last']}
 
--- *{e['title']}*, by {e['author']}
+-- {emph_start}{e['title']}{emph_end}, by {e['author']}
 
 """
 
 
 if __name__ == '__main__':
-    print(md_time())
+    if len(sys.argv) >= 2 and sys.argv[1] == 'md':
+        print(text(False))
+    else:
+        print(text())
